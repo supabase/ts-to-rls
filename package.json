@@ -12,7 +12,8 @@
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     },
-    "./dist/*.d.ts": "./dist/*.d.ts"
+    "./dist/*.d.ts": "./dist/*.d.ts",
+    "./dist/bundle.d.ts": "./dist/bundle.d.ts"
   },
   "sideEffects": false,
   "files": [
@@ -20,7 +21,7 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && dts-bundle-generator -o dist/bundle.d.ts src/index.ts",
     "lint": "eslint src tests",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -52,12 +53,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/rls-dsl.git"
+    "url": "https://github.com/supabase/rls-dsl.git"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/rls-dsl/issues"
+    "url": "https://github.com/supabase/rls-dsl/issues"
   },
-  "homepage": "https://github.com/yourusername/rls-dsl#readme",
+  "homepage": "https://github.com/supabase/rls-dsl#readme",
   "engines": {
     "node": ">=14.0.0"
   },
@@ -69,6 +70,7 @@
     "@typescript-eslint/eslint-plugin": "^8.46.3",
     "@typescript-eslint/parser": "^8.46.3",
     "@vitest/coverage-v8": "^4.0.8",
+    "dts-bundle-generator": "^9.5.1",
     "eslint": "^9.39.1",
     "pg": "^8.11.3",
     "typescript": "^5.0.0",
