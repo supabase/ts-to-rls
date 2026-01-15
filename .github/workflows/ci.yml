@@ -36,22 +36,17 @@ jobs:
       - name: Run unit tests
         run: pnpm test
 
-      - name: Install Supabase CLI
-        uses: supabase/setup-cli@v1
-        with:
-          version: latest
-
       - name: Start Supabase
-        run: supabase start
+        run: npx supabase start
         env:
           SUPABASE_DB_PASSWORD: postgres
 
       - name: Wait for Supabase to be ready
         run: |
           echo "Waiting for Supabase to start (may take several minutes on first run)..."
-          timeout 300 bash -c 'until supabase status 2>/dev/null | grep -q "API URL"; do echo "Waiting for Supabase..."; sleep 5; done'
+          timeout 300 bash -c 'until supabase status 2>/dev/null | grep -q "Project URL"; do echo "Waiting for Supabase..."; sleep 5; done'
           echo "Supabase is ready!"
-          supabase status
+          npx supabase status
 
       - name: Run integration tests
         env:
