@@ -1,5 +1,9 @@
 # RLS Policy DSL
 
+[![Docs](https://img.shields.io/badge/docs-API%20Reference-blue?logo=readthedocs)](https://supabase.github.io/ts-to-rls/)
+[![License](https://img.shields.io/npm/l/nx.svg?style=flat-square)](./LICENSE)
+[![pkg.pr.new](https://pkg.pr.new/badge/supabase/ts-to-rls)](https://pkg.pr.new/~/supabase/ts-to-rls)
+
 A TypeScript DSL for defining PostgreSQL Row Level Security (RLS) policies with a clean, type-safe API.
 
 ## Features
