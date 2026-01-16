@@ -10,13 +10,13 @@ import { ContextValue, SessionVariableType } from "./types";
  * @example
  * ```typescript
  * // Users can only see their own documents
- * createPolicy('user_docs')
+ * policy('user_docs')
  *   .on('documents')
  *   .read()
  *   .when(column('user_id').eq(auth.uid()));
  *
  * // Or use the helper method
- * createPolicy('user_docs')
+ * policy('user_docs')
  *   .on('documents')
  *   .read()
  *   .when(column('user_id').isOwner());
@@ -37,13 +37,13 @@ export const auth = {
    * column('user_id').eq(auth.uid())
    *
    * // In a policy
-   * createPolicy('user_documents')
+   * policy('user_documents')
    *   .on('documents')
    *   .read()
    *   .when(column('user_id').eq(auth.uid()));
    *
    * // With complex conditions
-   * createPolicy('project_access')
+   * policy('project_access')
    *   .on('projects')
    *   .read()
    *   .when(
@@ -71,7 +71,7 @@ export const auth = {
  * @example
  * ```typescript
  * // Tenant isolation
- * createPolicy('tenant_docs')
+ * policy('tenant_docs')
  *   .on('documents')
  *   .all()
  *   .requireAll()
@@ -80,7 +80,7 @@ export const auth = {
  *   );
  *
  * // Organization-based access
- * createPolicy('org_projects')
+ * policy('org_projects')
  *   .on('projects')
  *   .read()
  *   .when(
@@ -148,13 +148,13 @@ export const session = {
  * @example
  * ```typescript
  * // Role-based access (database roles)
- * createPolicy('admin_access')
+ * policy('admin_access')
  *   .on('sensitive_data')
  *   .read()
  *   .when(column('allowed_role').eq(currentUser()));
  *
  * // Check if current database user matches
- * createPolicy('role_check')
+ * policy('role_check')
  *   .on('audit_log')
  *   .read()
  *   .when(call('is_role_member', [currentUser(), 'auditor']));

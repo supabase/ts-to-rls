@@ -213,7 +213,7 @@ export class SubqueryBuilder {
  * @example
  * ```typescript
  * // Simple subquery - users can see projects they're members of
- * createPolicy('member_projects')
+ * policy('member_projects')
  *   .on('projects')
  *   .read()
  *   .when(
@@ -225,7 +225,7 @@ export class SubqueryBuilder {
  *   );
  *
  * // Subquery with alias
- * createPolicy('org_projects')
+ * policy('org_projects')
  *   .on('projects')
  *   .read()
  *   .when(
@@ -237,7 +237,7 @@ export class SubqueryBuilder {
  *   );
  *
  * // Subquery with join
- * createPolicy('accessible_docs')
+ * policy('accessible_docs')
  *   .on('documents')
  *   .read()
  *   .when(

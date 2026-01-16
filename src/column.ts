@@ -11,6 +11,7 @@ import {
   LogicalCondition,
   HelperCondition,
   FunctionCondition,
+  SQLExpression,
 } from "./types";
 import { auth, session } from "./context";
 import {
@@ -120,7 +121,7 @@ export class ColumnBuilder {
    * ```
    */
   eq(
-    value: string | number | boolean | Date | null | Condition | ConditionChain
+    value: string | number | boolean | Date | null | Condition | ConditionChain | SQLExpression
   ): ConditionChain {
     const normalizedValue =
       value instanceof ConditionChain ? value.toCondition() : value;
@@ -139,7 +140,7 @@ export class ColumnBuilder {
    * ```
    */
   neq(
-    value: string | number | boolean | Date | null | Condition | ConditionChain
+    value: string | number | boolean | Date | null | Condition | ConditionChain | SQLExpression
   ): ConditionChain {
     const normalizedValue =
       value instanceof ConditionChain ? value.toCondition() : value;
@@ -159,7 +160,7 @@ export class ColumnBuilder {
    * ```
    */
   gt(
-    value: string | number | boolean | Date | null | Condition | ConditionChain
+    value: string | number | boolean | Date | null | Condition | ConditionChain | SQLExpression
   ): ConditionChain {
     const normalizedValue =
       value instanceof ConditionChain ? value.toCondition() : value;
@@ -178,7 +179,7 @@ export class ColumnBuilder {
    * ```
    */
   gte(
-    value: string | number | boolean | Date | null | Condition | ConditionChain
+    value: string | number | boolean | Date | null | Condition | ConditionChain | SQLExpression
   ): ConditionChain {
     const normalizedValue =
       value instanceof ConditionChain ? value.toCondition() : value;
@@ -197,7 +198,7 @@ export class ColumnBuilder {
    * ```
    */
   lt(
-    value: string | number | boolean | Date | null | Condition | ConditionChain
+    value: string | number | boolean | Date | null | Condition | ConditionChain | SQLExpression
   ): ConditionChain {
     const normalizedValue =
       value instanceof ConditionChain ? value.toCondition() : value;
@@ -216,7 +217,7 @@ export class ColumnBuilder {
    * ```
    */
   lte(
-    value: string | number | boolean | Date | null | Condition | ConditionChain
+    value: string | number | boolean | Date | null | Condition | ConditionChain | SQLExpression
   ): ConditionChain {
     const normalizedValue =
       value instanceof ConditionChain ? value.toCondition() : value;
@@ -397,13 +398,13 @@ export class ColumnBuilder {
    * @example
    * ```typescript
    * // Users can only see their own documents
-   * createPolicy('user_docs')
+   * policy('user_docs')
    *   .on('documents')
    *   .read()
    *   .when(column('user_id').isOwner());
    *
    * // Users can only update their own profile
-   * createPolicy('update_profile')
+   * policy('update_profile')
    *   .on('profiles')
    *   .update()
    *   .when(column('user_id').isOwner());
@@ -421,13 +422,13 @@ export class ColumnBuilder {
    * @example
    * ```typescript
    * // Anyone can see public documents
-   * createPolicy('public_docs')
+   * policy('public_docs')
    *   .on('documents')
    *   .read()
    *   .when(column('is_public').isPublic());
    *
    * // Users can see their own docs OR public docs
-   * createPolicy('view_docs')
+   * policy('view_docs')
    *   .on('documents')
    *   .read()
    *   .when(
@@ -450,14 +451,14 @@ export class ColumnBuilder {
    * @example
    * ```typescript
    * // Restrict all access to current tenant
-   * createPolicy('tenant_isolation')
+   * policy('tenant_isolation')
    *   .on('documents')
    *   .all()
    *   .requireAll()
    *   .when(column('tenant_id').belongsToTenant());
    *
    * // Custom session key
-   * createPolicy('org_isolation')
+   * policy('org_isolation')
    *   .on('projects')
    *   .all()
    *   .requireAll()
@@ -482,13 +483,13 @@ export class ColumnBuilder {
    * @example
    * ```typescript
    * // Users can see projects they're members of
-   * createPolicy('member_projects')
+   * policy('member_projects')
    *   .on('projects')
    *   .read()
    *   .when(column('id').isMemberOf('project_members', 'project_id'));
    *
    * // Users can see organizations they belong to
-   * createPolicy('org_access')
+   * policy('org_access')
    *   .on('organizations')
    *   .read()
    *   .when(
@@ -551,7 +552,7 @@ export class ColumnBuilder {
  *
  * @example
  * ```typescript
- * createPolicy('admin_access')
+ * policy('admin_access')
  *   .on('admin_data')
  *   .for('SELECT')
  *   .when(hasRole('admin'))
@@ -582,7 +583,7 @@ export function hasRole(
  *
  * @example
  * ```typescript
- * createPolicy('admin_access')
+ * policy('admin_access')
  *   .on('admin_data')
  *   .for('SELECT')
  *   .when(alwaysTrue())
@@ -607,7 +608,7 @@ export function alwaysTrue(): ConditionChain {
  *
  * @example
  * ```typescript
- * createPolicy('custom_access')
+ * policy('custom_access')
  *   .on('data')
  *   .for('SELECT')
  *   .when(call('check_permission', ['user_id', 'read']))

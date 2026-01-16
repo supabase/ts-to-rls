@@ -78,6 +78,7 @@
     "typescript": "^5.0.0",
     "typescript-eslint": "^8.46.3",
     "uuid": "^10.0.0",
-    "vitest": "^4.0.8"
+    "vitest": "^4.0.8",
+    "biome": "^0.3.3"
   }
 }
