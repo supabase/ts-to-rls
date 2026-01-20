@@ -7,10 +7,6 @@ settings:
 importers:
 
   .:
-    dependencies:
-      biome:
-        specifier: ^0.3.3
-        version: 0.3.3
     devDependencies:
       '@eslint/js':
         specifier: ^9.39.1
@@ -33,6 +29,9 @@ importers:
       '@vitest/coverage-v8':
         specifier: ^4.0.8
         version: 4.0.17(vitest@4.0.17(@types/node@20.19.30)(yaml@2.8.2))
+      biome:
+        specifier: ^0.3.3
+        version: 0.3.3
       dts-bundle-generator:
         specifier: ^9.5.1
         version: 9.5.1
