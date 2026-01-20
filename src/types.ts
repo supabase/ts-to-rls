@@ -30,13 +30,28 @@ export interface Condition {
 }
 
 /**
+ * Raw SQL expression wrapper for embedding arbitrary SQL in conditions
+ */
+export class SQLExpression {
+  constructor(private expression: string) {}
+
+  toSQL(): string {
+    return this.expression;
+  }
+
+  toString(): string {
+    return this.expression;
+  }
+}
+
+/**
  * Comparison condition (eq, neq, gt, etc.)
  */
 export interface ComparisonCondition extends Condition {
   type: "comparison";
   column: string;
   operator: ComparisonOperator;
-  value: string | number | boolean | Date | null | Condition;
+  value: string | number | boolean | Date | null | Condition | SQLExpression;
 }
 
 /**

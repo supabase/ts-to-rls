@@ -21,7 +21,7 @@ import { Pool, Client, PoolClient } from "pg";
 import { escapeLiteral } from "pg/lib/utils";
 import { v4 as uuidv4 } from "uuid";
 import {
-  createPolicy,
+  policy,
   policies,
   session,
   createPolicyGroup,
@@ -423,12 +423,12 @@ describe("RLS Integration Tests", () => {
   describe("User Ownership Policies", () => {
     test("users can only SELECT their own documents", async () => {
       // Create policy using DSL
-      const policy = createPolicy("user_docs_select")
+      const p = policy("user_docs_select")
         .on("documents")
         .for("SELECT")
         .when(column("user_id").isOwner());
 
-      const policySQL = policy.toSQL();
+      const policySQL = p.toSQL();
 
       await adminClient.query(policySQL);
 
@@ -466,12 +466,12 @@ describe("RLS Integration Tests", () => {
 
     test("users can only INSERT documents with their own user_id", async () => {
       // Create policy using DSL
-      const policy = createPolicy("user_docs_insert")
+      const p = policy("user_docs_insert")
         .on("documents")
         .for("INSERT")
         .withCheck(column("user_id").isOwner());
 
-      const policySQL = policy.toSQL();
+      const policySQL = p.toSQL();
       await adminClient.query(policySQL);
 
       const user1Client = await pool.connect();
@@ -495,13 +495,13 @@ describe("RLS Integration Tests", () => {
 
     test("users can only UPDATE their own documents", async () => {
       // Create policy using DSL
-      const policy = createPolicy("user_docs_update")
+      const p = policy("user_docs_update")
         .on("documents")
         .for("UPDATE")
         .when(column("user_id").isOwner())
         .withCheck(column("user_id").isOwner());
 
-      const policySQL = policy.toSQL();
+      const policySQL = p.toSQL();
       await adminClient.query(policySQL);
 
       const user1Client = await pool.connect();
@@ -526,7 +526,7 @@ describe("RLS Integration Tests", () => {
   describe("Public Access Policies", () => {
     test("users can SELECT public documents regardless of ownership", async () => {
       // Create policies: users can see their own OR public documents
-      const ownPolicy = createPolicy("user_own_docs")
+      const ownPolicy = policy("user_own_docs")
         .on("documents")
         .for("SELECT")
         .when(column("user_id").isOwner());
@@ -562,7 +562,7 @@ describe("RLS Integration Tests", () => {
       // Create restrictive tenant isolation policy
       // Note: RESTRICTIVE policies require at least one PERMISSIVE policy to also pass
       // So we add a permissive policy that allows all (but restrictive will filter it)
-      const permissivePolicy = createPolicy("tenant_data_permissive")
+      const permissivePolicy = policy("tenant_data_permissive")
         .on("tenant_data")
         .for("ALL")
         .when(alwaysTrue());
@@ -603,12 +603,12 @@ describe("RLS Integration Tests", () => {
 
   describe("Complex Conditions", () => {
     test("OR condition: users can see own posts OR public posts", async () => {
-      const policy = createPolicy("posts_access")
+      const p = policy("posts_access")
         .on("posts")
         .for("SELECT")
         .when(column("user_id").isOwner().or(column("is_public").isPublic()));
 
-      await adminClient.query(policy.toSQL());
+      await adminClient.query(p.toSQL());
 
       const user1Client = await pool.connect();
       await user1Client.query("SET ROLE authenticated;");
@@ -625,12 +625,12 @@ describe("RLS Integration Tests", () => {
     });
 
     test("AND condition: users can see own posts with specific status", async () => {
-      const policy = createPolicy("posts_draft")
+      const p = policy("posts_draft")
         .on("posts")
         .for("SELECT")
         .when(column("user_id").isOwner().and(column("status").eq("draft")));
 
-      await adminClient.query(policy.toSQL());
+      await adminClient.query(p.toSQL());
 
       const user1Client = await pool.connect();
       await user1Client.query("SET ROLE authenticated;");
@@ -650,12 +650,12 @@ describe("RLS Integration Tests", () => {
   describe("Membership Conditions", () => {
     test("users can access projects they are members of", async () => {
       // Need a policy on project_members so the subquery can read it
-      const membersPolicy = createPolicy("project_members_select")
+      const membersPolicy = policy("project_members_select")
         .on("project_members")
         .for("SELECT")
         .when(alwaysTrue());
 
-      const policy = createPolicy("project_member_access")
+      const p = policy("project_member_access")
         .on("projects")
         .for("SELECT")
         .when(
@@ -664,7 +664,7 @@ describe("RLS Integration Tests", () => {
             .or(column("id").isMemberOf("project_members", "project_id", "id"))
         );
 
-      const policySQL = policy.toSQL();
+      const policySQL = p.toSQL();
       const membersSQL = membersPolicy.toSQL();
       await adminClient.query(membersSQL);
       await adminClient.query(policySQL);
@@ -688,12 +688,12 @@ describe("RLS Integration Tests", () => {
 
   describe("Role-Based Access", () => {
     test("users with admin role can access all data", async () => {
-      const adminPolicy = createPolicy("admin_full_access")
+      const adminPolicy = policy("admin_full_access")
         .on("documents")
         .for("SELECT")
         .when(hasRole("admin"));
 
-      const userPolicy = createPolicy("user_own_docs")
+      const userPolicy = policy("user_own_docs")
         .on("documents")
         .for("SELECT")
         .when(column("user_id").isOwner());
@@ -718,15 +718,15 @@ describe("RLS Integration Tests", () => {
   describe("Policy Groups", () => {
     test("policy group applies multiple policies correctly", async () => {
       const group = createPolicyGroup("documents_crud", [
-        createPolicy("documents_select")
+        policy("documents_select")
           .on("documents")
           .for("SELECT")
           .when(column("user_id").isOwner().or(column("is_public").isPublic())),
-        createPolicy("documents_insert")
+        policy("documents_insert")
           .on("documents")
           .for("INSERT")
           .withCheck(column("user_id").isOwner()),
-        createPolicy("documents_update")
+        policy("documents_update")
           .on("documents")
           .for("UPDATE")
           .when(column("user_id").isOwner())
@@ -770,7 +770,7 @@ describe("RLS Integration Tests", () => {
 
   describe("Session Variables", () => {
     test("policies work with session variables", async () => {
-      const policy = createPolicy("session_based_access")
+      const p = policy("session_based_access")
         .on("tenant_data")
         .for("SELECT")
         .when(
@@ -779,7 +779,7 @@ describe("RLS Integration Tests", () => {
           )
         );
 
-      const policySQL = policy.toSQL();
+      const policySQL = p.toSQL();
       await adminClient.query(policySQL);
 
       const user1Client = await pool.connect();
@@ -798,12 +798,12 @@ describe("RLS Integration Tests", () => {
 
   describe("Edge Cases", () => {
     test("users without context cannot access protected data", async () => {
-      const policy = createPolicy("protected_docs")
+      const p = policy("protected_docs")
         .on("documents")
         .for("SELECT")
         .when(column("user_id").isOwner());
 
-      await adminClient.query(policy.toSQL());
+      await adminClient.query(p.toSQL());
 
       const noAuthClient = await pool.connect();
       await noAuthClient.query("SET ROLE authenticated;");
@@ -824,7 +824,7 @@ describe("RLS Integration Tests", () => {
 
     test("restrictive policies work correctly", async () => {
       // Create restrictive tenant policy
-      const restrictivePolicy = createPolicy("restrictive_tenant")
+      const restrictivePolicy = policy("restrictive_tenant")
         .on("tenant_data")
         .for("ALL")
         .restrictive()
@@ -835,7 +835,7 @@ describe("RLS Integration Tests", () => {
         );
 
       // Create permissive policy (should be blocked by restrictive)
-      const permissivePolicy = createPolicy("permissive_all")
+      const permissivePolicy = policy("permissive_all")
         .on("tenant_data")
         .for("SELECT")
         .when(alwaysTrue());
@@ -861,12 +861,12 @@ describe("RLS Integration Tests", () => {
 
   describe("Index Generation", () => {
     test("indexes are created when includeIndexes is true", async () => {
-      const policy = createPolicy("user_docs_select")
+      const p = policy("user_docs_select")
         .on("documents")
         .for("SELECT")
         .when(column("user_id").eq(auth.uid()));
 
-      const sql = policy.toSQL({ includeIndexes: true });
+      const sql = p.toSQL({ includeIndexes: true });
 
       // Execute the SQL (should contain both policy and index)
       // Split by semicolon and filter out empty statements
@@ -894,12 +894,12 @@ describe("RLS Integration Tests", () => {
     });
 
     test("indexes are NOT created when includeIndexes is false", async () => {
-      const policy = createPolicy("user_docs_select_no_index")
+      const p = policy("user_docs_select_no_index")
         .on("documents")
         .for("SELECT")
         .when(column("user_id").eq(auth.uid()));
 
-      const sql = policy.toSQL({ includeIndexes: false });
+      const sql = p.toSQL({ includeIndexes: false });
       await adminClient.query(sql);
 
       // Verify index was NOT created
@@ -915,12 +915,12 @@ describe("RLS Integration Tests", () => {
     });
 
     test("indexes are NOT created when includeIndexes is undefined", async () => {
-      const policy = createPolicy("user_docs_select_default")
+      const p = policy("user_docs_select_default")
         .on("documents")
         .for("SELECT")
         .when(column("user_id").eq(auth.uid()));
 
-      const sql = policy.toSQL(); // No options
+      const sql = p.toSQL(); // No options
       await adminClient.query(sql);
 
       // Verify index was NOT created
@@ -936,12 +936,12 @@ describe("RLS Integration Tests", () => {
     });
 
     test("indexes are created for isOwner helper", async () => {
-      const policy = createPolicy("user_docs_isowner")
+      const p = policy("user_docs_isowner")
         .on("documents")
         .for("SELECT")
         .when(column("user_id").isOwner());
 
-      const sql = policy.toSQL({ includeIndexes: true });
+      const sql = p.toSQL({ includeIndexes: true });
       const statements = sql
         .split(";")
         .map((s) => s.trim())
@@ -963,12 +963,12 @@ describe("RLS Integration Tests", () => {
     });
 
     test("indexes are created for tenant isolation", async () => {
-      const policy = createPolicy("tenant_data_select")
+      const p = policy("tenant_data_select")
         .on("tenant_data")
         .for("SELECT")
         .when(column("tenant_id").belongsToTenant());
 
-      const sql = policy.toSQL({ includeIndexes: true });
+      const sql = p.toSQL({ includeIndexes: true });
       const statements = sql
         .split(";")
         .map((s) => s.trim())
@@ -991,12 +991,12 @@ describe("RLS Integration Tests", () => {
 
     test("indexes are created for IN clause with subquery", async () => {
       // Need a policy on project_members so the subquery can read it
-      const membersPolicy = createPolicy("project_members_select")
+      const membersPolicy = policy("project_members_select")
         .on("project_members")
         .for("SELECT")
         .when(alwaysTrue());
 
-      const policy = createPolicy("project_member_access")
+      const p = policy("project_member_access")
         .on("projects")
         .for("SELECT")
         .when(
@@ -1008,7 +1008,7 @@ describe("RLS Integration Tests", () => {
         );
 
       const membersSQL = membersPolicy.toSQL({ includeIndexes: true });
-      const policySQL = policy.toSQL({ includeIndexes: true });
+      const policySQL = p.toSQL({ includeIndexes: true });
 
       // Execute both policies - split each separately to handle newlines properly
       const membersStatements = membersSQL
@@ -1051,7 +1051,7 @@ describe("RLS Integration Tests", () => {
         ALTER TABLE documents ADD COLUMN IF NOT EXISTS organization_id UUID;
       `);
 
-      const policy = createPolicy("multi_column_policy")
+      const p = policy("multi_column_policy")
         .on("documents")
         .for("SELECT")
         .when(
@@ -1060,7 +1060,7 @@ describe("RLS Integration Tests", () => {
             .or(column("organization_id").eq(session.get("app.org_id", "uuid")))
         );
 
-      const sql = policy.toSQL({ includeIndexes: true });
+      const sql = p.toSQL({ includeIndexes: true });
       const statements = sql
         .split(";")
         .map((s) => s.trim())
@@ -1091,18 +1091,18 @@ describe("RLS Integration Tests", () => {
     });
 
     test("indexes are created for isMemberOf helper", async () => {
-      const membersPolicy = createPolicy("project_members_select")
+      const membersPolicy = policy("project_members_select")
         .on("project_members")
         .for("SELECT")
         .when(alwaysTrue());
 
-      const policy = createPolicy("member_projects")
+      const p = policy("member_projects")
         .on("projects")
         .for("SELECT")
         .when(column("id").isMemberOf("project_members", "project_id"));
 
       const membersSQL = membersPolicy.toSQL({ includeIndexes: true });
-      const policySQL = policy.toSQL({ includeIndexes: true });
+      const policySQL = p.toSQL({ includeIndexes: true });
 
       // Split each SQL separately to handle newlines properly
       const membersStatements = membersSQL
@@ -1150,11 +1150,11 @@ describe("RLS Integration Tests", () => {
 
     test("indexes are created for policy groups", async () => {
       const group = createPolicyGroup("user_policies", [
-        createPolicy("user_docs")
+        policy("user_docs")
           .on("documents")
           .for("SELECT")
           .when(column("user_id").eq(auth.uid())),
-        createPolicy("user_posts")
+        policy("user_posts")
           .on("posts")
           .for("SELECT")
           .when(column("user_id").eq(auth.uid())),
@@ -1191,15 +1191,15 @@ describe("RLS Integration Tests", () => {
 
     test("IF NOT EXISTS prevents duplicate index errors", async () => {
       // Create policy first (without indexes)
-      const policy = createPolicy("user_docs_select_if_not_exists")
+      const p = policy("user_docs_select_if_not_exists")
         .on("documents")
         .for("SELECT")
         .when(column("user_id").eq(auth.uid()));
 
-      await adminClient.query(policy.toSQL());
+      await adminClient.query(p.toSQL());
 
       // Now create the index SQL separately
-      const indexSQL = policy.toSQL({ includeIndexes: true });
+      const indexSQL = p.toSQL({ includeIndexes: true });
       const statements = indexSQL
         .split(";")
         .map((s) => s.trim())
@@ -1235,12 +1235,12 @@ describe("RLS Integration Tests", () => {
     });
 
     test("policies work correctly with generated indexes", async () => {
-      const policy = createPolicy("user_docs_with_index")
+      const p = policy("user_docs_with_index")
         .on("documents")
         .for("SELECT")
         .when(column("user_id").eq(auth.uid()));
 
-      const sql = policy.toSQL({ includeIndexes: true });
+      const sql = p     .toSQL({ includeIndexes: true });
       const statements = sql
         .split(";")
         .map((s) => s.trim())
@@ -1270,7 +1270,7 @@ describe("RLS Integration Tests", () => {
   describe("Index Generation with Joins", () => {
     test("indexes are created for columns in join conditions", () => {
       // Create a policy with a subquery that has a join
-      const policy = createPolicy("org_documents_access")
+      const p = policy("org_documents_access")
         .on("documents")
         .for("SELECT")
         .when(
@@ -1287,7 +1287,7 @@ describe("RLS Integration Tests", () => {
           )
         );
 
-      const sql = policy.toSQL({ includeIndexes: true });
+      const sql = p.toSQL({ includeIndexes: true });
 
       // Verify indexes are generated in the SQL:
       // 1. documents.id (used in IN clause)
@@ -1311,7 +1311,7 @@ describe("RLS Integration Tests", () => {
 
     test("indexes are created for join conditions with table aliases", () => {
       // Create a policy with a subquery that has a join using aliases
-      const policy = createPolicy("joined_projects_access")
+      const p = policy("joined_projects_access")
         .on("projects")
         .for("SELECT")
         .when(
@@ -1328,7 +1328,7 @@ describe("RLS Integration Tests", () => {
           )
         );
 
-      const sql = policy.toSQL({ includeIndexes: true });
+      const sql = p.toSQL({ includeIndexes: true });
 
       // Verify indexes are generated for join condition columns (using actual table names, not aliases)
       expect(sql).toContain(
@@ -1344,7 +1344,7 @@ describe("RLS Integration Tests", () => {
 
     test("indexes are created for left join conditions", () => {
       // Create a policy with a LEFT JOIN
-      const policy = createPolicy("left_join_access")
+      const p = policy("left_join_access")
         .on("documents")
         .for("SELECT")
         .when(
@@ -1361,7 +1361,7 @@ describe("RLS Integration Tests", () => {
           )
         );
 
-      const sql = policy.toSQL({ includeIndexes: true });
+      const sql = p.toSQL({ includeIndexes: true });
 
       // Verify indexes are generated for join condition (works for all join types)
       expect(sql).toContain(
@@ -1375,7 +1375,7 @@ describe("RLS Integration Tests", () => {
     test("indexes are created for complex join conditions with multiple columns", () => {
       // Create a policy with a join condition that uses multiple column comparisons
       // Note: This tests that join conditions are properly processed
-      const policy = createPolicy("complex_join_access")
+      const p = policy("complex_join_access")
         .on("projects")
         .for("SELECT")
         .when(
@@ -1394,7 +1394,7 @@ describe("RLS Integration Tests", () => {
           )
         );
 
-      const sql = policy.toSQL({ includeIndexes: true });
+      const sql = p.toSQL({ includeIndexes: true });
 
       // Verify indexes are generated for join condition columns
       // The join condition has p.id = pm.project_id, so both should be indexed
@@ -1409,7 +1409,7 @@ describe("RLS Integration Tests", () => {
     test("indexes for joins use actual table names not aliases", () => {
       // Verify that indexes generated for join conditions use actual table names,
       // not the aliases used in the subquery
-      const policy = createPolicy("org_docs_policy")
+      const p = policy("org_docs_policy")
         .on("documents")
         .for("SELECT")
         .when(
@@ -1426,7 +1426,7 @@ describe("RLS Integration Tests", () => {
           )
         );
 
-      const sql = policy.toSQL({ includeIndexes: true });
+      const sql = p.toSQL({ includeIndexes: true });
 
       // Verify that indexes use actual table names (organizations, organization_members)
       // not aliases (org, om)

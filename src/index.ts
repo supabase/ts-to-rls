@@ -9,7 +9,7 @@ export * from "./composition";
 export * from "./column";
 export * from "./subquery-builder";
 
-export { createPolicy, PolicyBuilder, policies } from "./policy-builder";
+export { policy, PolicyBuilder, policies } from "./policy-builder";
 export { auth, session, currentUser } from "./context";
 export { createPolicyGroup, policyGroupToSQL } from "./composition";
 export {

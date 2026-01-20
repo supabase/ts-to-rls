@@ -24,16 +24,16 @@ npm install ts-to-rls
 ## Quick Start
 
 ```typescript
-import { createPolicy, column, auth, from, session } from 'ts-to-rls';
+import { policy, column, auth, from, session } from 'ts-to-rls';
 
 // Simple user ownership (using user-focused API)
-const policy = createPolicy('user_documents')
+const userDocsPolicy = policy('user_documents')
   .on('documents')
   .read()
   .when(column('user_id').eq(auth.uid()));
 
 // Complex conditions with method chaining
-const complexPolicy = createPolicy('project_access')
+const complexPolicy = policy('project_access')
   .on('projects')
   .read()
   .when(
@@ -43,7 +43,7 @@ const complexPolicy = createPolicy('project_access')
   );
 
 // Subqueries
-const memberPolicy = createPolicy('member_access')
+const memberPolicy = policy('member_access')
   .on('projects')
   .read()
   .when(
@@ -54,7 +54,7 @@ const memberPolicy = createPolicy('member_access')
     )
   );
 
-console.log(policy.toSQL());
+console.log(userDocsPolicy.toSQL());
 ```
 
 ### Policy Templates
@@ -74,7 +74,7 @@ This library provides two API styles:
 
 **User-Focused API (Recommended)** - Uses intuitive terms like `read()`, `write()`, `update()`, `requireAll()`:
 ```typescript
-createPolicy('user_docs')
+policy('user_docs')
   .on('documents')
   .read()           // Instead of .for('SELECT')
   .requireAll()      // Instead of .restrictive()
@@ -83,7 +83,7 @@ createPolicy('user_docs')
 
 **RLS-Focused API** - Uses PostgreSQL RLS terminology like `for('SELECT')`, `restrictive()`:
 ```typescript
-createPolicy('user_docs')
+policy('user_docs')
   .on('documents')
   .for('SELECT')     // RLS terminology
   .restrictive()     // RLS terminology
@@ -97,7 +97,7 @@ Both APIs are fully supported and produce identical SQL. The user-focused API is
 ### Policy Builder
 
 ```typescript
-createPolicy(name)
+policy(name)
   .on(table)                    // Target table
   .read()                       // User-focused: allow reading (SELECT)
   .write()                      // User-focused: allow creating (INSERT)
@@ -192,12 +192,12 @@ Automatically generate indexes for RLS performance optimization:
 
 ```typescript
 // User-focused API (recommended)
-const policy = createPolicy('user_documents')
+const userDocsPolicy = policy('user_documents')
   .on('documents')
   .read()
   .when(column('user_id').eq(auth.uid()));
 
-const sql = policy.toSQL({ includeIndexes: true });
+const sql = userDocsPolicy.toSQL({ includeIndexes: true });
 ```
 
 Indexes are created for columns in equality comparisons, IN clauses, and subquery conditions.
@@ -208,13 +208,13 @@ Indexes are created for columns in equality comparisons, IN clauses, and subquer
 
 ```typescript
 // User-focused API (recommended)
-createPolicy('user_documents')
+policy('user_documents')
   .on('documents')
   .read()
   .when(column('user_id').eq(auth.uid()));
 
 // Or using .allow() for automatic USING/WITH CHECK handling
-createPolicy('user_documents')
+policy('user_documents')
   .on('documents')
   .read()
   .allow(column('user_id').isOwner());
@@ -224,7 +224,7 @@ createPolicy('user_documents')
 
 ```typescript
 // User-focused API (recommended)
-createPolicy('tenant_isolation')
+policy('tenant_isolation')
   .on('tenant_data')
   .all()
   .requireAll()
@@ -235,7 +235,7 @@ createPolicy('tenant_isolation')
 
 ```typescript
 // User-focused API (recommended)
-createPolicy('project_access')
+policy('project_access')
   .on('projects')
   .read()
   .when(
@@ -254,7 +254,7 @@ createPolicy('project_access')
 
 ```typescript
 // User-focused API (recommended)
-createPolicy('user_documents_insert')
+policy('user_documents_insert')
   .on('user_documents')
   .write()
   .allow(column('user_id').eq(auth.uid()));
@@ -264,7 +264,7 @@ createPolicy('user_documents_insert')
 
 ```typescript
 // User-focused API (recommended)
-createPolicy('user_documents_update')
+policy('user_documents_update')
   .on('user_documents')
   .update()
   .allow(column('user_id').eq(auth.uid()));

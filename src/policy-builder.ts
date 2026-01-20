@@ -2,20 +2,20 @@
  * Policy builder with fluent API
  */
 
-import {
-  PolicyDefinition,
-  PolicyBuilderState,
-  PolicyOperation,
-  Condition,
-  SQLGenerationOptions,
+import type {
   ComparisonCondition,
-  MembershipCondition,
-  LogicalCondition,
-  SubqueryDefinition,
+  Condition,
   ContextValue,
   HelperCondition,
+  LogicalCondition,
+  MembershipCondition,
+  PolicyBuilderState,
+  PolicyDefinition,
+  PolicyOperation,
+  SQLGenerationOptions,
+  SubqueryDefinition,
 } from "./types";
-import { escapeIdentifier } from "./sql";
+import { escapeIdentifier, sanitizePolicyName } from "./sql";
 import { ConditionChain, column, hasRole } from "./column";
 import { SubqueryBuilder } from "./subquery-builder";
 
@@ -320,7 +320,7 @@ export class PolicyBuilder {
    *
    * @example
    * ```typescript
-   * createPolicy('view_docs')
+   * policy('view_docs')
    *   .on('documents')
    *   .read()
    *   .when(column('user_id').isOwner());
@@ -335,7 +335,7 @@ export class PolicyBuilder {
    *
    * @example
    * ```typescript
-   * createPolicy('create_docs')
+   * policy('create_docs')
    *   .on('documents')
    *   .write()
    *   .withCheck(column('user_id').isOwner());
@@ -350,7 +350,7 @@ export class PolicyBuilder {
    *
    * @example
    * ```typescript
-   * createPolicy('update_docs')
+   * policy('update_docs')
    *   .on('documents')
    *   .update()
    *   .when(column('user_id').isOwner())
@@ -366,7 +366,7 @@ export class PolicyBuilder {
    *
    * @example
    * ```typescript
-   * createPolicy('delete_docs')
+   * policy('delete_docs')
    *   .on('documents')
    *   .delete()
    *   .when(column('user_id').isOwner());
@@ -381,7 +381,7 @@ export class PolicyBuilder {
    *
    * @example
    * ```typescript
-   * createPolicy('full_access')
+   * policy('full_access')
    *   .on('documents')
    *   .all()
    *   .when(column('user_id').isOwner());
@@ -407,13 +407,13 @@ export class PolicyBuilder {
    * @example
    * ```typescript
    * // Users can only see their own documents
-   * createPolicy('view_own_docs')
+   * policy('view_own_docs')
    *   .on('documents')
    *   .read()
    *   .when(column('user_id').isOwner());
    *
    * // Complex condition with OR
-   * createPolicy('view_docs')
+   * policy('view_docs')
    *   .on('documents')
    *   .read()
    *   .when(
@@ -435,13 +435,13 @@ export class PolicyBuilder {
    * @example
    * ```typescript
    * // Prevent users from creating documents for other users
-   * createPolicy('create_docs')
+   * policy('create_docs')
    *   .on('documents')
    *   .write()
    *   .withCheck(column('user_id').isOwner());
    *
    * // For UPDATE, use both when() and withCheck()
-   * createPolicy('update_docs')
+   * policy('update_docs')
    *   .on('documents')
    *   .update()
    *   .when(column('user_id').isOwner())  // Can only update own docs
@@ -462,19 +462,19 @@ export class PolicyBuilder {
    * @example
    * ```typescript
    * // For SELECT - sets USING only
-   * createPolicy('read_docs')
+   * policy('read_docs')
    *   .on('documents')
    *   .read()
    *   .allow(column('user_id').isOwner());
    *
    * // For INSERT - sets WITH CHECK only
-   * createPolicy('create_docs')
+   * policy('create_docs')
    *   .on('documents')
    *   .write()
    *   .allow(column('user_id').isOwner());
    *
    * // For UPDATE - sets both USING and WITH CHECK
-   * createPolicy('update_docs')
+   * policy('update_docs')
    *   .on('documents')
    *   .update()
    *   .allow(column('user_id').isOwner());
@@ -531,14 +531,14 @@ export class PolicyBuilder {
    * @example
    * ```typescript
    * // Tenant isolation that restricts all other policies
-   * createPolicy('tenant_isolation')
+   * policy('tenant_isolation')
    *   .on('documents')
    *   .all()
    *   .requireAll()  // This policy AND other policies must pass
    *   .when(column('tenant_id').belongsToTenant());
    *
    * // Now add a permissive policy for user access
-   * createPolicy('user_access')
+   * policy('user_access')
    *   .on('documents')
    *   .read()
    *   .when(column('user_id').isOwner());
@@ -558,13 +558,13 @@ export class PolicyBuilder {
    * @example
    * ```typescript
    * // Multiple ways to access documents
-   * createPolicy('owner_access')
+   * policy('owner_access')
    *   .on('documents')
    *   .read()
    *   .allowAny()  // Explicit, but this is the default
    *   .when(column('user_id').isOwner());
    *
-   * createPolicy('public_access')
+   * policy('public_access')
    *   .on('documents')
    *   .read()
    *   .when(column('is_public').eq(true));
@@ -584,12 +584,30 @@ export class PolicyBuilder {
   }
 
   /**
+   * Generate a policy name based on table, operation, and type
+   */
+  private generatePolicyName(): string {
+    if (!this.state.table) {
+      throw new Error("Cannot generate policy name: table is required");
+    }
+    if (!this.state.operation) {
+      throw new Error("Cannot generate policy name: operation is required");
+    }
+
+    const table = this.state.table;
+    const operation = this.state.operation.toLowerCase();
+    const isRestrictive = this.state.type === "RESTRICTIVE";
+
+    if (isRestrictive) {
+      return `${table}_${operation}_restrictive_policy`;
+    }
+    return `${table}_${operation}_policy`;
+  }
+
+  /**
    * Get the policy definition
    */
   toDefinition(): PolicyDefinition {
-    if (!this.state.name) {
-      throw new Error("Policy name is required");
-    }
     if (!this.state.table) {
       throw new Error("Policy table is required");
     }
@@ -597,8 +615,13 @@ export class PolicyBuilder {
       throw new Error("Policy operation is required");
     }
 
+    // Use provided name or auto-generate one
+    const rawName = this.state.name || this.generatePolicyName();
+    // Sanitize the name for PostgreSQL compatibility
+    const name = sanitizePolicyName(rawName);
+
     return {
-      name: this.state.name,
+      name,
       table: this.state.table,
       operation: this.state.operation,
       role: this.state.role,
@@ -681,30 +704,36 @@ export class PolicyBuilder {
 /**
  * Create a new policy builder
  *
- * @param name The name of the policy
+ * @param name Optional name for the policy. If not provided, a name will be auto-generated
+ *             based on the table, operation, and policy type.
  * @returns A PolicyBuilder instance for fluent API chaining
  *
  * @example
  * ```typescript
- * // Simple user ownership policy
- * const policy = createPolicy('user_documents')
+ * // Simple user ownership policy with explicit name
+ * const p = policy('user_documents')
  *   .on('documents')
  *   .read()
  *   .when(column('user_id').isOwner());
  *
- * // Complex policy with multiple conditions
- * const policy = createPolicy('project_access')
- *   .on('projects')
+ * // Auto-generated name -> "documents_select_policy"
+ * const p = policy()
+ *   .on('documents')
  *   .read()
- *   .when(
- *     column('is_public').eq(true)
- *       .or(column('user_id').isOwner())
- *   );
+ *   .when(column('user_id').isOwner());
+ *
+ * // Auto-generated restrictive -> "documents_all_restrictive_policy"
+ * const p = policy()
+ *   .on('documents')
+ *   .all()
+ *   .restrictive()
+ *   .when(column('tenant_id').belongsToTenant());
  * ```
  */
-export function createPolicy(name: string): PolicyBuilder {
+export function policy(name?: string): PolicyBuilder {
   return new PolicyBuilder(name);
 }
+
 
 /**
  * Policy template helpers for common patterns
@@ -742,7 +771,7 @@ export const policies = {
     const ops = Array.isArray(operations) ? operations : [operations];
 
     return ops.map((op) => {
-      const policy = createPolicy(`${table}_${op.toLowerCase()}_owner`)
+      const p = policy(`${table}_${op.toLowerCase()}_owner`)
         .on(table)
         .for(op);
 
@@ -753,7 +782,7 @@ export const policies = {
         op === "UPDATE" ||
         op === "ALL"
       ) {
-        policy.when(column(userIdColumn).isOwner());
+        p.when(column(userIdColumn).isOwner());
       }
       // INSERT, UPDATE, and DELETE need WITH CHECK (write validation)
       if (
@@ -762,10 +791,10 @@ export const policies = {
         op === "DELETE" ||
         op === "ALL"
       ) {
-        policy.withCheck(column(userIdColumn).isOwner());
+        p.withCheck(column(userIdColumn).isOwner());
       }
 
-      return policy;
+      return p;
     });
   },
 
@@ -803,7 +832,7 @@ export const policies = {
     tenantColumn: string = "tenant_id",
     sessionKey: string = "app.current_tenant_id"
   ): PolicyBuilder {
-    return createPolicy(`${table}_tenant_isolation`)
+    return policy(`${table}_tenant_isolation`)
       .on(table)
       .for("ALL")
       .restrictive()
@@ -838,7 +867,7 @@ export const policies = {
     table: string,
     visibilityColumn: string = "is_public"
   ): PolicyBuilder {
-    return createPolicy(`${table}_public_access`)
+    return policy(`${table}_public_access`)
       .on(table)
       .for("SELECT")
       .when(column(visibilityColumn).isPublic());
@@ -876,7 +905,7 @@ export const policies = {
     const ops = Array.isArray(operations) ? operations : [operations];
 
     return ops.map((op) =>
-      createPolicy(`${table}_${op.toLowerCase()}_${role}`)
+      policy(`${table}_${op.toLowerCase()}_${role}`)
         .on(table)
         .for(op)
         .when(hasRole(role))
