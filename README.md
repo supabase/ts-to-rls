@@ -6,6 +6,8 @@
 
 A TypeScript DSL for defining PostgreSQL Row Level Security (RLS) policies with a clean, type-safe API.
 
+> **⚠️ Experimental:** This is an experimental project and not an official Supabase library. It is not published to npm. Test builds are available via [pkg-pr-new](https://pkg.pr.new) for evaluation purposes only.
+
 ## Features
 
 - Simple & intuitive fluent API that reads like natural language
@@ -17,8 +19,11 @@ A TypeScript DSL for defining PostgreSQL Row Level Security (RLS) policies with 
 
 ## Installation
 
+This package is not published to npm. Test builds are available via [pkg-pr-new](https://pkg.pr.new) for each PR/commit:
+
 ```bash
-npm install ts-to-rls
+# Install a specific commit build (check pkg.pr.new badge for latest URL)
+npm install https://pkg.pr.new/supabase/ts-to-rls@{commit-sha}
 ```
 
 ## Quick Start
@@ -276,9 +281,9 @@ policy('user_documents_update')
 ## Development
 
 ```bash
-npm install
-npm run build
-npm test
+pnpm install
+pnpm run build
+pnpm test
 ```
 
 ## License
