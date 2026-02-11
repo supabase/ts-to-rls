@@ -7,7 +7,6 @@ import { ColumnBuilder, ConditionChain } from './column';
 import { PolicyBuilder } from './policy-builder';
 import { auth, session } from './context';
 import type {
-  ContextValue,
   SQLExpression,
   Condition,
   ComparisonCondition,
@@ -106,7 +105,7 @@ export type ColumnType<
  * Column builder that enforces value types match column types
  * Stores table context for qualified column references
  */
-export class TypedColumnBuilder<T> extends ColumnBuilder {
+export class TypedColumnBuilder extends ColumnBuilder {
   private table: string;
   private col: string;
 
@@ -390,7 +389,9 @@ export class TypedColumnBuilder<T> extends ColumnBuilder {
  * Policy builder with table type locked in
  */
 export class TypedPolicyBuilder<
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   DB,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   TableName extends TableNames<DB>,
 > extends PolicyBuilder {
   // All methods from PolicyBuilder are inherited and work the same

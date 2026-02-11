@@ -54,6 +54,7 @@ export default function SchemaViewer({
     }
 
     fetchSchema();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isConnected]);
 
   const fetchSchema = async () => {
@@ -88,7 +89,7 @@ export default function SchemaViewer({
             .order('ordinal_position');
 
           const columns: Column[] =
-            columnsData?.map((col: any) => ({
+            columnsData?.map((col: Record<string, unknown>) => ({
               name: col.column_name,
               type: col.data_type,
               nullable: col.is_nullable === 'YES',

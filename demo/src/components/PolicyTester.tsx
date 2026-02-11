@@ -28,7 +28,7 @@ interface PolicyTesterProps {
 interface TestResult {
   userId: string;
   userName: string;
-  rows: any[];
+  rows: unknown[];
   error?: string;
 }
 
@@ -81,10 +81,12 @@ export default function PolicyTester({
       setApplyStatus('success');
       setAppliedPolicy(policyName);
       setTimeout(() => setApplyStatus('idle'), 3000);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error applying policy:', error);
       setApplyStatus('error');
-      setApplyError(error.message || 'Failed to apply policy');
+      setApplyError(
+        error instanceof Error ? error.message : 'Failed to apply policy'
+      );
     }
   };
 
@@ -118,9 +120,11 @@ export default function PolicyTester({
       setAppliedPolicy(null);
       setApplyStatus('idle');
       setResults([]);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error cleaning up policy:', error);
-      setApplyError(error.message || 'Failed to cleanup policy');
+      setApplyError(
+        error instanceof Error ? error.message : 'Failed to cleanup policy'
+      );
     }
   };
 
@@ -147,7 +151,7 @@ export default function PolicyTester({
           rows: data || [],
         },
       ]);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error testing query:', error);
       const user = TEST_USERS.find((u) => u.id === selectedUser);
       setResults([
@@ -155,7 +159,7 @@ export default function PolicyTester({
           userId: selectedUser,
           userName: user?.name || 'Unknown',
           rows: [],
-          error: error.message || 'Query failed',
+          error: error instanceof Error ? error.message : 'Query failed',
         },
       ]);
     } finally {

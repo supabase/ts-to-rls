@@ -9,6 +9,7 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 // Database types will be generated from the schema
 // Run `pnpm supabase:types` to generate these types
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type Database = any; // Will be replaced with actual types
 
 const supabaseUrl =
