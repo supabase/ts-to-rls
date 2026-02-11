@@ -63,6 +63,9 @@
     "url": "https://github.com/supabase-community/rowguard/issues"
   },
   "homepage": "https://github.com/supabase-community/rowguard#readme",
+  "publishConfig": {
+    "access": "public"
+  },
   "engines": {
     "node": ">=14.0.0"
   },
