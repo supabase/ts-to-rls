@@ -11,7 +11,7 @@ export default defineConfig({
     exclude: ['**/node_modules/**', '**/dist/**'],
     include: isIntegration
       ? ['tests/integration.test.ts']
-      : ['tests/sql-generation.test.ts'],
+      : ['tests/sql-generation.test.ts', 'tests/typed.test.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'json-summary'],
