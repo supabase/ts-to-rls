@@ -1,13 +1,15 @@
 # Rowguard - RLS Policy DSL
 
+[![npm version](https://img.shields.io/npm/v/rowguard.svg?style=flat-square)](https://www.npmjs.com/package/rowguard)
 [![Docs](https://img.shields.io/badge/docs-API%20Reference-blue?logo=readthedocs)](https://supabase-community.github.io/rowguard/)
-[![License](https://img.shields.io/npm/l/nx.svg?style=flat-square)](./LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](./LICENSE)
 [![pkg.pr.new](https://pkg.pr.new/badge/supabase-community/rowguard)](https://pkg.pr.new/~/supabase-community/rowguard)
 
 A TypeScript DSL for defining PostgreSQL Row Level Security (RLS) policies with a clean, type-safe API.
 
-> **⚠️ Experimental:** This is an experimental project and not an official Supabase library. It is not published to npm. Test builds are available via [pkg-pr-new](https://pkg.pr.new) for evaluation purposes only.
-> **⚠️ No Performance Evaluation:** This library does not evaluate the policy performance. You should use Performance Advisory to evaluate the policy performance.
+> **⚠️ Experimental:** This is an experimental project and not an official Supabase library. Use with caution in production.
+>
+> **⚠️ No Performance Evaluation:** This library does not evaluate policy performance. You should use [Supabase Performance Advisor](https://supabase.com/docs/guides/database/performance) to evaluate your RLS policy performance.
 
 ## Interactive Demo
 
@@ -32,11 +34,30 @@ The demo source code is in the [`demo/`](./demo) directory.
 
 ## Installation
 
-This package is not published to npm. Test builds are available via [pkg-pr-new](https://pkg.pr.new) for each PR/commit:
+Install via npm:
 
 ```bash
-# Install a specific commit build (check pkg.pr.new badge for latest URL)
-npm install https://pkg.pr.new/supabase-community/rowguard@{commit-sha}
+npm install rowguard
+```
+
+```bash
+# pnpm
+pnpm add rowguard
+
+# yarn
+yarn add rowguard
+
+# bun
+bun add rowguard
+```
+
+### Testing Unreleased Features
+
+Preview builds are available via [pkg-pr-new](https://pkg.pr.new) for each PR/commit:
+
+```bash
+# Install a preview build from a PR (check pkg.pr.new badge for latest URL)
+npm install https://pkg.pr.new/supabase-community/rowguard@{pr-number}
 ```
 
 ## Quick Start
@@ -291,14 +312,51 @@ policy('user_documents_update')
 
 
 
-## Development
+## Contributing
+
+We welcome contributions! Please see our [Contributing Guide](./CONTRIBUTING.md) for details on:
+
+- Setting up your development environment
+- Running tests and building the project
+- Code style guidelines
+- How to submit pull requests
+- Testing your changes with preview deployments
+
+### Quick Start for Contributors
 
 ```bash
+# Install dependencies
 pnpm install
+
+# Build the library
 pnpm run build
+
+# Run tests
 pnpm test
+
+# Run integration tests (requires Supabase CLI)
+pnpm run test:integration:full
+
+# Run the interactive demo
+pnpm run demo:dev
 ```
+
+For more detailed information, see [CONTRIBUTING.md](./CONTRIBUTING.md).
+
+## Release Process
+
+This project uses automated releases via [release-please](https://github.com/googleapis/release-please).
+
+- All commits must follow [Conventional Commits](https://www.conventionalcommits.org/) format
+- Releases are automatically published to npm when maintainers merge the release PR
+- For detailed information, see [RELEASE.md](./RELEASE.md)
+
+## Documentation
+
+- **[API Reference](https://supabase-community.github.io/rowguard/)** - Full API documentation
+- **[Contributing Guide](./CONTRIBUTING.md)** - How to contribute to the project
+- **[Release Process](./RELEASE.md)** - How releases are managed
 
 ## License
 
-MIT
+MIT - see [LICENSE](./LICENSE) file for details
